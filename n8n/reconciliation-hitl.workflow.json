@@ -1,0 +1,92 @@
+{
+  "name": "Réconciliation Retail↔Compta — Revue humaine (HITL)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "reconciliation-validation",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "11111111-1111-4111-8111-111111111111",
+      "name": "Webhook (proposition en attente)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [260, 300],
+      "webhookId": "reconciliation-validation"
+    },
+    {
+      "parameters": {
+        "resume": "form",
+        "formTitle": "Revue de réconciliation Retail↔Compta",
+        "formDescription": "=Proposition {{ $json.body.proposal_id }} — période {{ $json.body.periode }} / magasin {{ $json.body.magasin }}.\nÉcart global Retail−Compta : {{ $json.body.ecart_global }} €  |  écarts : {{ $json.body.nb_ecarts }}  |  non appariés : {{ $json.body.nb_non_apparies }}.\n\nSynthèse de l'agent :\n{{ $json.body.synthese }}\n\nArtefact : {{ $json.body.artefact_uri }}",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "decision",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "approve" },
+                  { "option": "reject" }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "validateur",
+              "fieldType": "text",
+              "placeholder": "votre email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "commentaire",
+              "fieldType": "text",
+              "placeholder": "motif / observations"
+            }
+          ]
+        },
+        "options": {
+          "formSubmittedText": "Décision enregistrée. La réconciliation est transmise à l'agent."
+        }
+      },
+      "id": "22222222-2222-4222-8222-222222222222",
+      "name": "Revue humaine (formulaire)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [520, 300],
+      "webhookId": "reconciliation-hitl-form"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://reconciliation:8000/proposal/{{ $('Webhook (proposition en attente)').item.json.body.proposal_id }}/validate",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ decision: $json.decision, validateur: $json.validateur, commentaire: $json.commentaire }) }}",
+        "options": {}
+      },
+      "id": "33333333-3333-4333-8333-333333333333",
+      "name": "Appel agent /validate",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [780, 300]
+    }
+  ],
+  "connections": {
+    "Webhook (proposition en attente)": {
+      "main": [
+        [ { "node": "Revue humaine (formulaire)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Revue humaine (formulaire)": {
+      "main": [
+        [ { "node": "Appel agent /validate", "type": "main", "index": 0 } ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}
