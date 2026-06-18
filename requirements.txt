@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pydantic-settings
+httpx
+minio
+anthropic
+langfuse>=2.40,<3
