@@ -9,7 +9,7 @@ class Settings(BaseSettings):
 
     # --- Service ---
     app_name: str = "Agent Réconciliation Retail↔Compta"
-    app_version: str = "0.1.0"
+    app_version: str = "0.1.1"
     log_level: str = "INFO"
 
     # --- RAG (Hermes) — hostname interne STABLE sur le réseau recette ---

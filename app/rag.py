@@ -6,6 +6,18 @@ import httpx
 from .config import settings
 
 
+def hermes_health() -> bool:
+    """Sonde légère de disponibilité du RAG (Hermes /health) — sans coût LLM.
+    À utiliser pour /ready (vs query_hermes qui déclenche une vraie requête RAG)."""
+    if not settings.rag_configured:
+        return False
+    try:
+        r = httpx.get(f"{settings.hermes_url}/health", timeout=5.0)
+        return r.status_code == 200
+    except Exception:
+        return False
+
+
 def query_hermes(question: str, *, top_k: int | None = None) -> dict:
     """Interroge Hermes /query. Renvoie {answer, citations, ...} ou {} si indisponible."""
     if not settings.rag_configured:

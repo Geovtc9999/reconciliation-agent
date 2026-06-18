@@ -12,14 +12,37 @@
       "name": "Webhook (proposition en attente)",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [260, 300],
+      "position": [240, 300],
       "webhookId": "reconciliation-validation"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.brevo.com/v3/smtp/email",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ sender: { name: 'NEXERP Réconciliation', email: 'contact@nexerp.fr' }, to: [{ email: 'richard@geovtc.com' }], subject: 'Réconciliation à valider — ' + $json.body.proposal_id + ' (écart ' + $json.body.ecart_global + '€)', htmlContent: '<p>Une réconciliation <b>' + $json.body.proposal_id + '</b> (' + $json.body.periode + ' / ' + ($json.body.magasin || '-') + ') attend ta validation.</p>' + '<p>Écart global Retail−Compta : <b>' + $json.body.ecart_global + ' €</b> — écarts : ' + $json.body.nb_ecarts + ', non appariés : ' + $json.body.nb_non_apparies + '.</p>' + '<p style=\"white-space:pre-wrap\">' + ($json.body.synthese || '') + '</p>' + '<p><a href=\"' + $execution.resumeFormUrl + '\">► Ouvrir le formulaire de revue</a></p>' + '<p style=\"color:#888;font-size:12px\">Artefact : ' + ($json.body.artefact_uri || '') + '</p>' }) }}",
+        "options": {}
+      },
+      "id": "44444444-4444-4444-8444-444444444444",
+      "name": "Email Brevo (lien de revue)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_BREVO_CREDENTIAL",
+          "name": "Brevo api-key"
+        }
+      }
     },
     {
       "parameters": {
         "resume": "form",
         "formTitle": "Revue de réconciliation Retail↔Compta",
-        "formDescription": "=Proposition {{ $json.body.proposal_id }} — période {{ $json.body.periode }} / magasin {{ $json.body.magasin }}.\nÉcart global Retail−Compta : {{ $json.body.ecart_global }} €  |  écarts : {{ $json.body.nb_ecarts }}  |  non appariés : {{ $json.body.nb_non_apparies }}.\n\nSynthèse de l'agent :\n{{ $json.body.synthese }}\n\nArtefact : {{ $json.body.artefact_uri }}",
+        "formDescription": "=Proposition {{ $('Webhook (proposition en attente)').item.json.body.proposal_id }} — période {{ $('Webhook (proposition en attente)').item.json.body.periode }} / magasin {{ $('Webhook (proposition en attente)').item.json.body.magasin }}.\nÉcart global Retail−Compta : {{ $('Webhook (proposition en attente)').item.json.body.ecart_global }} €  |  écarts : {{ $('Webhook (proposition en attente)').item.json.body.nb_ecarts }}  |  non appariés : {{ $('Webhook (proposition en attente)').item.json.body.nb_non_apparies }}.\n\nSynthèse de l'agent :\n{{ $('Webhook (proposition en attente)').item.json.body.synthese }}",
         "formFields": {
           "values": [
             {
@@ -54,7 +77,7 @@
       "name": "Revue humaine (formulaire)",
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
-      "position": [520, 300],
+      "position": [680, 300],
       "webhookId": "reconciliation-hitl-form"
     },
     {
@@ -70,11 +93,16 @@
       "name": "Appel agent /validate",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [780, 300]
+      "position": [900, 300]
     }
   ],
   "connections": {
     "Webhook (proposition en attente)": {
+      "main": [
+        [ { "node": "Email Brevo (lien de revue)", "type": "main", "index": 0 } ]
+      ]
+    },
+    "Email Brevo (lien de revue)": {
       "main": [
         [ { "node": "Revue humaine (formulaire)", "type": "main", "index": 0 } ]
       ]

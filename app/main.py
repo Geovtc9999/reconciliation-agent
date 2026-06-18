@@ -44,9 +44,8 @@ def ready():
         checks["bucket_ok"] = False
         checks["s3_error"] = str(e)[:200]
     try:
-        from .rag import query_hermes
-        r = query_hermes("ping", top_k=1)
-        checks["rag"]["reachable"] = "error" not in r
+        from .rag import hermes_health
+        checks["rag"]["reachable"] = hermes_health()   # sonde /health, sans coût LLM
     except Exception as e:
         checks["rag"]["reachable"] = False
         checks["rag"]["error"] = str(e)[:160]
